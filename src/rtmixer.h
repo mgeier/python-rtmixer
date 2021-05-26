@@ -34,10 +34,10 @@ struct stats
 struct action
 {
   const enum actiontype type;
-  bool allow_belated;  // NB: Might be invalidated in the callback function!
+  bool _allow_belated;  // NB: Might be invalidated in the callback function!
   const PaTime requested_time;
   PaTime actual_time;
-  struct action* next;  // Used to create singly linked list of actions
+  struct action* _next;  // Used to create singly linked list of actions
   union {
     float* const buffer;
     struct PaUtilRingBuffer* const ringbuffer;

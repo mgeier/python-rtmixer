@@ -22,8 +22,8 @@ static const struct stats EMPTY_STATS;
 void remove_action(struct action** addr, const struct state* state)
 {
   struct action* action = *addr;
-  *addr = action->next;  // Current action is removed from list
-  action->next = NULL;
+  *addr = action->_next;  // Current action is removed from list
+  action->_next = NULL;
   ring_buffer_size_t written = PaUtil_WriteRingBuffer(state->result_q
     , &action, 1);
   if (written != 1)
@@ -71,18 +71,18 @@ void get_new_actions(struct state* state)
   {
     do
     {
-      struct action* next = new_action->next;
+      struct action* next = new_action->_next;
       if (new_action->type == CANCEL)
       {
-        new_action->next = state->actions;
+        new_action->_next = state->actions;
         state->actions = new_action;
       }
       else
       {
-        new_action->next = NULL;
+        new_action->_next = NULL;
         while (*last_action_addr)
         {
-          last_action_addr = &((*last_action_addr)->next);
+          last_action_addr = &((*last_action_addr)->_next);
         }
         *last_action_addr = new_action;
       }
@@ -160,8 +160,8 @@ int callback(const void* input, void* output, frame_t frameCount
 
           // Due to inaccuracies in timeInfo, "diff" might have a small negative
           // value in a future block.  We don't count this as "belated" though:
-          action->allow_belated = true;
-          actionaddr = &(action->next);
+          action->_allow_belated = true;
+          actionaddr = &(action->_next);
           continue;
         }
         // Re-calculate "diff" to propagate rounding errors
@@ -170,7 +170,7 @@ int callback(const void* input, void* output, frame_t frameCount
       else
       {
         // We are too late!
-        if (!action->allow_belated)
+        if (!action->_allow_belated)
         {
           action->actual_time = 0.0;  // a.k.a. "false"
           remove_action(actionaddr, state);
@@ -186,7 +186,7 @@ int callback(const void* input, void* output, frame_t frameCount
     {
       // Since CANCEL actions are inserted in the beginning,
       // we need to search only the following list items
-      for (struct action** i = &(action->next); *i; i = &((*i)->next))
+      for (struct action** i = &(action->_next); *i; i = &((*i)->_next))
       {
         if (*i == action->_payload.action)
         {
@@ -213,7 +213,7 @@ int callback(const void* input, void* output, frame_t frameCount
             }
             else
             {
-              if (!delinquent->allow_belated)
+              if (!delinquent->_allow_belated)
               {
                 // TODO: save some status information?
                 break;  // The action will not be started, no need to cancel it
@@ -418,7 +418,7 @@ int callback(const void* input, void* output, frame_t frameCount
       remove_action(actionaddr, state);
       continue;
     }
-    actionaddr = &(action->next);
+    actionaddr = &(action->_next);
   }
   return paContinue;
 }
