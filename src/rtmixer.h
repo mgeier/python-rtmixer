@@ -42,7 +42,7 @@ struct action
     float* const buffer;
     struct PaUtilRingBuffer* const ringbuffer;
     struct action* const action;  // Used in CANCEL
-  };
+  } _payload;
   frame_t total_frames;
   frame_t done_frames;
   struct stats stats;

@@ -104,7 +104,7 @@ PaTime get_relevant_time(const struct action* action
   if (type == CANCEL)
   {
     CALLBACK_ASSERT(action->action);
-    type = action->action->type;
+    type = action->_payload.action->type;
   }
 
   switch (type)
@@ -188,7 +188,7 @@ int callback(const void* input, void* output, frame_t frameCount
       // we need to search only the following list items
       for (struct action** i = &(action->next); *i; i = &((*i)->next))
       {
-        if (*i == action->action)
+        if (*i == action->_payload.action)
         {
           struct action* delinquent = *i;
 
@@ -299,7 +299,8 @@ int callback(const void* input, void* output, frame_t frameCount
 
     if (action->type == PLAY_BUFFER || action->type == RECORD_BUFFER)
     {
-      float* buffer = action->buffer + action->done_frames * action->channels;
+      float* buffer =
+        action->_payload.buffer + action->done_frames * action->channels;
       action->done_frames += frames;
       if (action->type == PLAY_BUFFER)
       {
@@ -343,7 +344,7 @@ int callback(const void* input, void* output, frame_t frameCount
 
       if (action->type == PLAY_RINGBUFFER)
       {
-        totalsize = PaUtil_GetRingBufferReadRegions(action->ringbuffer
+        totalsize = PaUtil_GetRingBufferReadRegions(action->_payload.ringbuffer
           , (ring_buffer_size_t)frames
           , (void**)&block1, &size1, (void**)&block2, &size2);
         CALLBACK_ASSERT(!totalsize || size1);
@@ -367,13 +368,14 @@ int callback(const void* input, void* output, frame_t frameCount
           device_data += state->output_channels;
         }
         action->done_frames += (frame_t)totalsize;
-        PaUtil_AdvanceRingBufferReadIndex(action->ringbuffer, totalsize);
+        PaUtil_AdvanceRingBufferReadIndex(
+            action->_payload.ringbuffer, totalsize);
       }
       else
       {
         CALLBACK_ASSERT(action->type == RECORD_RINGBUFFER);
 
-        totalsize = PaUtil_GetRingBufferWriteRegions(action->ringbuffer
+        totalsize = PaUtil_GetRingBufferWriteRegions(action->_payload.ringbuffer
           , (ring_buffer_size_t)frames
           , (void**)&block1, &size1, (void**)&block2, &size2);
         CALLBACK_ASSERT(!totalsize || size1);
@@ -397,7 +399,8 @@ int callback(const void* input, void* output, frame_t frameCount
           device_data += state->input_channels;
         }
         action->done_frames += (frame_t)totalsize;
-        PaUtil_AdvanceRingBufferWriteIndex(action->ringbuffer, totalsize);
+        PaUtil_AdvanceRingBufferWriteIndex(
+            action->_payload.ringbuffer, totalsize);
       }
 
       if (totalsize < (ring_buffer_size_t)frames)

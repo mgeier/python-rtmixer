@@ -117,7 +117,7 @@ class MiniSampler(tk.Tk, tkhelper.KeyEventDebouncer):
         if sample.action.type == rtmixer.CANCEL:
             # TODO: check for errors in CANCEL action?
             # NB: The "inner" action had to be kept alive
-            action = sample.action.action
+            action = sample.action._payload.action
         else:
             action = sample.action
         assert action.type == rtmixer.RECORD_RINGBUFFER
