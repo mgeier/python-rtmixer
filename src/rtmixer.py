@@ -158,16 +158,14 @@ class Mixer(_Base):
 
     """
 
+    # TODO: move to base class
+    _armed = None
+
     def __init__(self, **kwargs):
         _Base.__init__(self, kind='output', **kwargs)
         self._state.output_channels = self.channels
 
-    def play_buffer(self, buffer, channels, start=0, allow_belated=True):
-        """Send a buffer to the callback to be played back.
-
-        After calling this, the *buffer* must not be written to anymore.
-
-        """
+    def arm_for_play_buffer(self, buffer, channels, start=0, allow_belated=True):
         channels, mapping = self._check_channels(channels, 'output')
         buffer = _ffi.from_buffer(buffer)
         _, samplesize = _sd._split(self.samplesize)
@@ -180,8 +178,34 @@ class Mixer(_Base):
             channels=channels,
             mapping=mapping,
         ))
-        self._enqueue(action, keep_alive=buffer)
-        return action
+        # TODO: helper function
+        if self._armed is None:
+            self._armed = action
+        else:
+            i = self._armed
+            while i.next is not None:
+                i = i.next
+            i.next = action
+
+        # TODO: keep alive
+
+        #self._enqueue(action, keep_alive=buffer)
+        #return action
+
+    # TODO: move to base class
+    def trigger_armed(self):
+        self._enqueue(self._armed)
+        return all_triggered_actions
+
+    def play_buffer(self, buffer, channels, start=0, allow_belated=True):
+        """Send a buffer to the callback to be played back.
+
+        After calling this, the *buffer* must not be written to anymore.
+
+        """
+        arm_for_play_buffer(buffer, channels, start, allow_belated)
+        # TODO keep buffer alive
+        return self.trigger_armed()[-1]
 
     def play_ringbuffer(self, ringbuffer, channels=None, start=0,
                         allow_belated=True):
